@@ -7,7 +7,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # ---- Stage 2: python runtime ----
-FROM python:3.12-slim AS runtime
+FROM python:3.14-slim AS runtime
 WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1 \
