@@ -4,9 +4,9 @@ Thanks for your interest! This project is small and welcomes focused PRs.
 
 ## Layout
 
-- `backend/commit_watcher/` — Python service. `services.py` is the single business-logic layer used by
+- `backend/github_watcher/` — Python service. `services.py` is the single business-logic layer used by
   the REST API, CLI, MCP server, and poller. Add behavior there, not in the interfaces.
-- `backend/commit_watcher/core/` — pure-ish building blocks: `filters.py` (filter engine),
+- `backend/github_watcher/core/` — pure-ish building blocks: `filters.py` (filter engine),
   `github.py` (API client), `notify.py` (Apprise), `render.py`, `config_io.py`.
 - `frontend/` — React + Vite + Tailwind SPA.
 

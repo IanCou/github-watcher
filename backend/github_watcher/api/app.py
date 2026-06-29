@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="commit-watcher",
+    title="github-watcher",
     version="0.1.0",
     summary="Poll any GitHub repo, filter commits, and notify.",
     lifespan=lifespan,

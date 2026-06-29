@@ -1,9 +1,9 @@
-"""MCP server exposing commit-watcher to agents (Claude et al.).
+"""MCP server exposing github-watcher to agents (Claude et al.).
 
 Tools mirror the service layer so an agent can manage watches/channels and query
 matches with the same semantics as the UI/CLI/REST. Run with:
 
-    python -m commit_watcher.mcp_server      # stdio transport
+    python -m github_watcher.mcp_server      # stdio transport
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from . import services
 from .core.schemas import ChannelCreate, FilterSet, TemplateSpec, WatchCreate, WatchUpdate
 from .db import init_db
 
-mcp = FastMCP("commit-watcher")
+mcp = FastMCP("github-watcher")
 
 
 @mcp.tool()

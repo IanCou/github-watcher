@@ -1,7 +1,7 @@
 import httpx
 import respx
 
-from commit_watcher.core.github import GitHubClient, commit_data_from_detail
+from github_watcher.core.github import GitHubClient, commit_data_from_detail
 
 BASE = "https://api.github.com"
 

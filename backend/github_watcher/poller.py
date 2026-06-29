@@ -10,7 +10,7 @@ import logging
 from . import services
 from .settings import settings
 
-log = logging.getLogger("commit_watcher.poller")
+log = logging.getLogger("github_watcher.poller")
 
 
 class Poller:

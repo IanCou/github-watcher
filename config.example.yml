@@ -1,4 +1,4 @@
-# Importable config (commit-watcher config import config.yml). The database is
+# Importable config (github-watcher config import config.yml). The database is
 # the source of truth; this file is for portability / GitOps seeding.
 
 channels:

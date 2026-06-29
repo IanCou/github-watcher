@@ -1,5 +1,5 @@
 [project]
-name = "commit-watcher"
+name = "github-watcher"
 version = "0.1.0"
 description = "Poll any GitHub repo's commits, filter by message/author/files/diff, and notify via ntfy, Discord, and 100+ Apprise channels. Web UI + REST API + CLI + MCP server."
 requires-python = ">=3.11"
@@ -27,14 +27,14 @@ dev = [
 ]
 
 [project.scripts]
-commit-watcher = "commit_watcher.cli:app"
+github-watcher = "github_watcher.cli:app"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["commit_watcher"]
+packages = ["github_watcher"]
 
 [tool.ruff]
 line-length = 100

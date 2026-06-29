@@ -26,7 +26,7 @@ from .core.schemas import (
 from .db import get_session
 from .settings import settings
 
-log = logging.getLogger("commit_watcher.services")
+log = logging.getLogger("github_watcher.services")
 
 
 # ---- Watch CRUD -------------------------------------------------------------
@@ -110,7 +110,7 @@ async def test_channel(name: str) -> tuple[bool, str | None]:
             raise KeyError(name)
         url = ch.url
     return await notify.send(
-        [url], "commit-watcher test", "If you can read this, the channel works. ✅"
+        [url], "github-watcher test", "If you can read this, the channel works. ✅"
     )
 
 

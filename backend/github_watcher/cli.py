@@ -13,7 +13,7 @@ from .core import config_io
 from .core.schemas import ChannelCreate, WatchCreate
 from .db import init_db
 
-app = typer.Typer(help="commit-watcher: poll any GitHub repo, filter commits, notify.")
+app = typer.Typer(help="github-watcher: poll any GitHub repo, filter commits, notify.")
 watch_app = typer.Typer(help="Manage watches.")
 channel_app = typer.Typer(help="Manage channels.")
 config_app = typer.Typer(help="Import/export YAML config.")
@@ -137,7 +137,7 @@ def serve(host: str = "0.0.0.0", port: int = 8000) -> None:
     """Run the API + background poller (production entrypoint)."""
     import uvicorn
 
-    uvicorn.run("commit_watcher.api.app:app", host=host, port=port)
+    uvicorn.run("github_watcher.api.app:app", host=host, port=port)
 
 
 if __name__ == "__main__":

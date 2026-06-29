@@ -1,10 +1,10 @@
 import pytest
 from pydantic import ValidationError
 
-from commit_watcher.core.filters import evaluate
-from commit_watcher.core.github import commit_data_from_issue
-from commit_watcher.core.render import build_issue_context
-from commit_watcher.core.schemas import (
+from github_watcher.core.filters import evaluate
+from github_watcher.core.github import commit_data_from_issue
+from github_watcher.core.render import build_issue_context
+from github_watcher.core.schemas import (
     FilterSet,
     IncludeExclude,
     TemplateSpec,
@@ -58,7 +58,7 @@ def test_issue_context_exposes_item_and_issue():
 
 
 def test_default_template_renders_for_issues():
-    from commit_watcher.core.render import render
+    from github_watcher.core.render import render
 
     ctx = build_issue_context("o/r", _issue(), [])
     title, body = render(TemplateSpec(), ctx)  # kind-neutral default uses item.*

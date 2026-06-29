@@ -1,4 +1,4 @@
-# commit-watcher
+# github-watcher
 
 Poll **any** GitHub repo's commits, **filter** them by message / author / changed files / diff
 content, and get **notified** via ntfy, Discord, Slack, Telegram, email — anything
@@ -12,7 +12,7 @@ Four ways to drive it, all sharing one backend:
 
 - 🖥️ **Web UI** — manage watches/channels, browse match history, watch live status
 - 🔌 **REST API** — OpenAPI-documented, at `/docs`
-- ⌨️ **CLI** — `commit-watcher watch add …`
+- ⌨️ **CLI** — `github-watcher watch add …`
 - 🤖 **MCP server** — so agents (Claude etc.) can manage and query it directly
 
 > Why it exists: notification tools assume you control the repo. For a third-party repo — say,
@@ -32,7 +32,7 @@ open http://localhost:8000  # UI + API docs at /docs
 Seed it from a config file (optional):
 
 ```sh
-docker compose exec commit-watcher commit-watcher config import /app/config.yml
+docker compose exec github-watcher github-watcher config import /app/config.yml
 ```
 
 ## How filtering works
@@ -82,20 +82,20 @@ ntfy://${NTFY_TOKEN}@ntfy.example.net/commits
 discord://${DISCORD_WEBHOOK_ID}/${DISCORD_WEBHOOK_TOKEN}
 ```
 
-Test one from the UI, CLI (`commit-watcher channel test ntfy-main`), or MCP.
+Test one from the UI, CLI (`github-watcher channel test ntfy-main`), or MCP.
 
 ## CLI
 
 ```sh
-commit-watcher channel add ntfy-main 'ntfy://${NTFY_TOKEN}@ntfy.example.net/commits'
-commit-watcher watch add -f watch.yml      # one watch as YAML/JSON
-commit-watcher watch list
-commit-watcher watch dry-run 1             # evaluate latest commits, send nothing
-commit-watcher watch run 1                 # poll once now
-commit-watcher matches --limit 20
-commit-watcher status
-commit-watcher config export -o config.yml
-commit-watcher serve                       # API + poller (what the container runs)
+github-watcher channel add ntfy-main 'ntfy://${NTFY_TOKEN}@ntfy.example.net/commits'
+github-watcher watch add -f watch.yml      # one watch as YAML/JSON
+github-watcher watch list
+github-watcher watch dry-run 1             # evaluate latest commits, send nothing
+github-watcher watch run 1                 # poll once now
+github-watcher matches --limit 20
+github-watcher status
+github-watcher config export -o config.yml
+github-watcher serve                       # API + poller (what the container runs)
 ```
 
 ## MCP (agent access)
@@ -103,13 +103,13 @@ commit-watcher serve                       # API + poller (what the container ru
 Run the stdio server:
 
 ```sh
-python -m commit_watcher.mcp_server
+python -m github_watcher.mcp_server
 ```
 
 Register it with an MCP client, e.g. Claude Code:
 
 ```json
-{ "mcpServers": { "commit-watcher": { "command": "python", "args": ["-m", "commit_watcher.mcp_server"] } } }
+{ "mcpServers": { "github-watcher": { "command": "python", "args": ["-m", "github_watcher.mcp_server"] } } }
 ```
 
 Tools: `list_watches`, `add_watch`, `update_watch`, `delete_watch`, `list_channels`, `add_channel`,
@@ -128,7 +128,7 @@ Tools: `list_watches`, `add_watch`, `update_watch`, `delete_watch`, `list_channe
 cd backend && python3.12 -m venv .venv && . .venv/bin/activate
 pip install -e ".[dev]"
 pytest -q && ruff check .
-DISABLE_POLLER=1 uvicorn commit_watcher.api.app:app --reload   # API only
+DISABLE_POLLER=1 uvicorn github_watcher.api.app:app --reload   # API only
 
 # Frontend (proxies /api to :8000)
 cd frontend && npm install && npm run dev
@@ -138,7 +138,7 @@ cd frontend && npm install && npm run dev
 
 A single Python service with a shared **service layer** behind every interface, so the UI, CLI, MCP,
 and background poller never drift. **SQLite** is the source of truth; YAML import/export is for
-portability. See [docs in the source](backend/commit_watcher/) — `services.py` is the entry point for
+portability. See [docs in the source](backend/github_watcher/) — `services.py` is the entry point for
 all business logic, `core/filters.py` is the filter engine, `core/github.py` the ETag-aware client.
 
 ## License

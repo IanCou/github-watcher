@@ -19,7 +19,7 @@ export default function App() {
   return (
     <div className="mx-auto max-w-4xl p-4 sm:p-8">
       <header className="mb-6">
-        <h1 className="text-2xl font-bold">commit-watcher</h1>
+        <h1 className="text-2xl font-bold">github-watcher</h1>
         <p className="text-sm text-slate-500">
           Poll any GitHub repo, filter commits, and get notified.
         </p>

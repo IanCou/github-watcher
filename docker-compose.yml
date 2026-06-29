@@ -1,8 +1,8 @@
 services:
-  commit-watcher:
+  github-watcher:
     build: .
-    image: ghcr.io/iancoutinho/commit-watcher:latest
-    container_name: commit-watcher
+    image: ghcr.io/iancou/github-watcher:latest
+    container_name: github-watcher
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -13,13 +13,13 @@ services:
       - NTFY_TOKEN=${NTFY_TOKEN:-}
       - DISCORD_WEBHOOK_ID=${DISCORD_WEBHOOK_ID:-}
       - DISCORD_WEBHOOK_TOKEN=${DISCORD_WEBHOOK_TOKEN:-}
-      - DATABASE_URL=sqlite:////data/commit-watcher.db
+      - DATABASE_URL=sqlite:////data/github-watcher.db
       - LOG_LEVEL=INFO
       # Timestamps use this zone. Defaults to UTC; set TZ in .env to your local
       # zone (e.g. America/New_York) to match the host.
       - TZ=${TZ:-UTC}
     volumes:
-      - cw-data:/data
+      - gw-data:/data
 
 volumes:
-  cw-data:
+  gw-data:

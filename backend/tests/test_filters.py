@@ -1,5 +1,5 @@
-from commit_watcher.core.filters import CommitData, evaluate
-from commit_watcher.core.schemas import FilterSet, IncludeExclude
+from github_watcher.core.filters import CommitData, evaluate
+from github_watcher.core.schemas import FilterSet, IncludeExclude
 
 
 def _commit(**kw) -> CommitData:

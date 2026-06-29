@@ -1,4 +1,4 @@
-// Typed client for the commit-watcher REST API.
+// Typed client for the github-watcher REST API.
 
 export interface Watch {
   id: number;
