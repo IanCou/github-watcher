@@ -17,6 +17,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # GHCR image names must be lowercase; github.repository keeps the owner's case.
+      - name: Compute lowercase image name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -26,7 +30,7 @@ jobs:
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ${{ env.IMAGE }}
           tags: |
             type=semver,pattern={{version}}
             type=raw,value=latest
@@ -42,7 +46,7 @@ jobs:
       - name: Scan image (Trivy)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}
+          image-ref: ${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: "1"
@@ -50,16 +54,16 @@ jobs:
       - name: Generate SBOM (Syft)
         uses: anchore/sbom-action@v0
         with:
-          image: ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}
+          image: ${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
           format: spdx-json
           output-file: sbom.spdx.json
 
       - name: Sign image + attest provenance (cosign)
         uses: sigstore/cosign-installer@v3
       - run: |
-          cosign sign --yes ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}
+          cosign sign --yes ${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
           cosign attest --yes --predicate sbom.spdx.json --type spdxjson \
-            ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}
+            ${{ env.IMAGE }}@${{ steps.build.outputs.digest }}
 
       - name: Attach SBOM to GitHub release
         uses: softprops/action-gh-release@v2
