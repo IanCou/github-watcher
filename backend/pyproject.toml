@@ -1,0 +1,50 @@
+[project]
+name = "commit-watcher"
+version = "0.1.0"
+description = "Poll any GitHub repo's commits, filter by message/author/files/diff, and notify via ntfy, Discord, and 100+ Apprise channels. Web UI + REST API + CLI + MCP server."
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Ian Coutinho" }]
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "sqlmodel>=0.0.16",
+    "httpx>=0.27",
+    "apprise>=1.7",
+    "jinja2>=3.1",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+    "prometheus-client>=0.20",
+    "mcp>=1.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "respx>=0.21",
+    "ruff>=0.4",
+]
+
+[project.scripts]
+commit-watcher = "commit_watcher.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["commit_watcher"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+# B008: Typer/FastAPI use function calls (Option/Body/Depends) as arg defaults by design.
+ignore = ["B008"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

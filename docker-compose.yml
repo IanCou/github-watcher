@@ -1,0 +1,22 @@
+services:
+  commit-watcher:
+    build: .
+    image: ghcr.io/iancoutinho/commit-watcher:latest
+    container_name: commit-watcher
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Optional: raises GitHub rate limit to 5,000 req/hr and enables private repos.
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      # Secrets referenced by ${VAR} in channel URLs are resolved at send time.
+      - NTFY_TOKEN=${NTFY_TOKEN:-}
+      - DISCORD_WEBHOOK_ID=${DISCORD_WEBHOOK_ID:-}
+      - DISCORD_WEBHOOK_TOKEN=${DISCORD_WEBHOOK_TOKEN:-}
+      - DATABASE_URL=sqlite:////data/commit-watcher.db
+      - LOG_LEVEL=INFO
+    volumes:
+      - cw-data:/data
+
+volumes:
+  cw-data:

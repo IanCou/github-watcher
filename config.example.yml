@@ -1,0 +1,34 @@
+# Importable config (commit-watcher config import config.yml). The database is
+# the source of truth; this file is for portability / GitOps seeding.
+
+channels:
+  ntfy-main:
+    url: "ntfy://${NTFY_TOKEN}@ntfy.example.net/commits"
+  discord-jobs:
+    url: "discord://${DISCORD_WEBHOOK_ID}/${DISCORD_WEBHOOK_TOKEN}"
+
+watches:
+  # The original use case: alert only when a *Google* posting lands in the
+  # Simplify internship list — not on every bot commit.
+  - name: simplify-google-internships
+    repo: SimplifyJobs/Summer2026-Internships
+    branch: dev
+    interval: 60
+    channels: [ntfy-main, discord-jobs]
+    filters:
+      files:
+        include: ["**/listings.json"]   # glob; ** crosses directories
+      diff:
+        include: ['(?i)\bgoogle\b', "(?i)deepmind"]   # regex on added/removed lines
+    template:
+      title: "New match in {{ repo }}: {{ matched_keywords | join(', ') }}"
+      body: "{{ commit.message_first_line }} — {{ commit.author }} · {{ commit.short_sha }}"
+
+  # A simpler, message-only watch (cheap: no per-commit diff fetch).
+  - name: cpython-security-commits
+    repo: python/cpython
+    interval: 300
+    channels: [ntfy-main]
+    filters:
+      message:
+        include: ["(?i)security", "(?i)CVE-"]
