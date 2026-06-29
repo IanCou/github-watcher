@@ -1,7 +1,7 @@
-"""Async GitHub REST client: list commits (ETag-conditional) + fetch diffs.
+"""Async GitHub REST client: list commits/issues (ETag-conditional) + fetch diffs.
 
-Unchanged commit listings return HTTP 304 via ``If-None-Match`` and cost zero
-against the rate limit — the key efficiency lever that makes tight polling safe.
+Unchanged listings return HTTP 304 via ``If-None-Match`` and cost zero against
+the rate limit — the key efficiency lever that makes tight polling safe.
 """
 from __future__ import annotations
 
@@ -14,9 +14,9 @@ from .filters import CommitData
 
 
 @dataclass
-class CommitsResponse:
+class ListResponse:
     status: int  # 200, 304, or an error code
-    commits: list[dict]  # raw GitHub commit objects (empty on 304/error)
+    items: list[dict]  # raw GitHub objects (commits or issues; empty on 304/error)
     etag: str | None
     rate_remaining: int | None
     error: str | None = None
@@ -37,6 +37,36 @@ class GitHubClient:
             h["Authorization"] = f"Bearer {self._token}"
         return h
 
+    async def _list(
+        self,
+        path: str,
+        params: dict[str, str | int],
+        *,
+        etag: str | None,
+        client: httpx.AsyncClient | None,
+    ) -> ListResponse:
+        headers = self._headers()
+        if etag:
+            headers["If-None-Match"] = etag
+        owns = client is None
+        client = client or httpx.AsyncClient(timeout=20)
+        try:
+            r = await client.get(f"{self._base}{path}", params=params, headers=headers)
+            remaining = _int_or_none(r.headers.get("X-RateLimit-Remaining"))
+            new_etag = r.headers.get("ETag", etag)
+            if r.status_code == 304:
+                return ListResponse(304, [], new_etag, remaining)
+            if r.status_code != 200:
+                return ListResponse(
+                    r.status_code, [], new_etag, remaining, error=r.text[:300]
+                )
+            return ListResponse(200, r.json(), new_etag, remaining)
+        except httpx.HTTPError as e:
+            return ListResponse(0, [], etag, None, error=str(e))
+        finally:
+            if owns:
+                await client.aclose()
+
     async def list_commits(
         self,
         repo: str,
@@ -45,34 +75,33 @@ class GitHubClient:
         etag: str | None = None,
         per_page: int = 30,
         client: httpx.AsyncClient | None = None,
-    ) -> CommitsResponse:
+    ) -> ListResponse:
         params: dict[str, str | int] = {"per_page": per_page}
         if branch:
             params["sha"] = branch
-        headers = self._headers()
-        if etag:
-            headers["If-None-Match"] = etag
+        return await self._list(
+            f"/repos/{repo}/commits", params, etag=etag, client=client
+        )
 
-        owns = client is None
-        client = client or httpx.AsyncClient(timeout=20)
-        try:
-            r = await client.get(
-                f"{self._base}/repos/{repo}/commits", params=params, headers=headers
-            )
-            remaining = _int_or_none(r.headers.get("X-RateLimit-Remaining"))
-            new_etag = r.headers.get("ETag", etag)
-            if r.status_code == 304:
-                return CommitsResponse(304, [], new_etag, remaining)
-            if r.status_code != 200:
-                return CommitsResponse(
-                    r.status_code, [], new_etag, remaining, error=r.text[:300]
-                )
-            return CommitsResponse(200, r.json(), new_etag, remaining)
-        except httpx.HTTPError as e:
-            return CommitsResponse(0, [], etag, None, error=str(e))
-        finally:
-            if owns:
-                await client.aclose()
+    async def list_issues(
+        self,
+        repo: str,
+        *,
+        etag: str | None = None,
+        per_page: int = 30,
+        client: httpx.AsyncClient | None = None,
+    ) -> ListResponse:
+        # Newest first by creation. Note: this endpoint also returns pull
+        # requests (they carry a "pull_request" key); callers filter those out.
+        params: dict[str, str | int] = {
+            "per_page": per_page,
+            "state": "all",
+            "sort": "created",
+            "direction": "desc",
+        }
+        return await self._list(
+            f"/repos/{repo}/issues", params, etag=etag, client=client
+        )
 
     async def fetch_commit_detail(
         self, repo: str, sha: str, *, client: httpx.AsyncClient | None = None
@@ -120,3 +149,19 @@ def commit_data_from_detail(c: dict) -> CommitData:
     base.changed_files = [f.get("filename", "") for f in files if f.get("filename")]
     base.diff_text = "\n".join(f.get("patch", "") for f in files if f.get("patch"))
     return base
+
+
+def commit_data_from_issue(issue: dict) -> CommitData:
+    """Map an issue onto the filter engine's input.
+
+    The ``message`` filter sees title + body; ``author`` sees the issue opener.
+    ``files``/``diff`` are commit-only and stay empty (validated out for issues).
+    """
+    user = issue.get("user", {}) or {}
+    title = issue.get("title", "") or ""
+    body = issue.get("body", "") or ""
+    return CommitData(
+        sha=str(issue.get("number", "")),
+        message=f"{title}\n{body}",
+        author_name=user.get("login", "") or "",
+    )

@@ -37,6 +37,7 @@ def create_watch(data: WatchCreate) -> Watch:
         watch = Watch(
             name=data.name,
             repo=data.repo,
+            kind=data.kind,
             branch=data.branch,
             interval=data.interval,
             enabled=data.enabled,
@@ -53,7 +54,7 @@ def update_watch(watch_id: int, data: WatchUpdate) -> Watch:
         if not watch:
             raise KeyError(watch_id)
         patch = data.model_dump(exclude_unset=True)
-        for key in ("repo", "branch", "interval", "enabled", "channels"):
+        for key in ("repo", "kind", "branch", "interval", "enabled", "channels"):
             if key in patch:
                 setattr(watch, key, patch[key])
         if data.filters is not None:
@@ -155,8 +156,52 @@ async def _commit_data(client, gh, repo_name, summary, fs: FilterSet):
     return data
 
 
+async def _listing(gh, watch: Watch, etag, client, per_page=30):
+    if watch.kind == "issues":
+        return await gh.list_issues(watch.repo, etag=etag, per_page=per_page, client=client)
+    return await gh.list_commits(
+        watch.repo, branch=watch.branch, etag=etag, per_page=per_page, client=client
+    )
+
+
+def _new_items(kind: str, items: list[dict], seen: set[str]) -> list[tuple[str, dict]]:
+    """Unseen raw items, oldest-first. For issues, pull requests are skipped."""
+    out: list[tuple[str, dict]] = []
+    for raw in reversed(items):
+        if kind == "issues":
+            if "pull_request" in raw:  # the issues endpoint also returns PRs
+                continue
+            ident = str(raw.get("number") or "")
+        else:
+            ident = raw.get("sha") or ""
+        if not ident or ident in seen:
+            continue
+        out.append((ident, raw))
+    return out
+
+
+async def _prepare(watch: Watch, raw: dict, fs: FilterSet, gh, client):
+    """Build (filter_input, context_factory, match_kind) for one raw item."""
+    if watch.kind == "issues":
+        data = github.commit_data_from_issue(raw)
+
+        def ctx(keywords):
+            return render.build_issue_context(watch.repo, raw, keywords)
+
+        return data, ctx, "issue"
+
+    data = await _commit_data(client, gh, watch.repo, raw, fs)
+
+    def ctx(keywords):
+        return render.build_context(
+            watch.repo, watch.branch, data, keywords, raw.get("html_url")
+        )
+
+    return data, ctx, "commit"
+
+
 async def process_watch(watch_id: int, *, send: bool = True) -> list[Match]:
-    """Poll a watch once: detect new commits, filter, persist + notify matches."""
+    """Poll a watch once: detect new commits/issues, filter, persist + notify."""
     with get_session() as s:
         watch = repo.get_watch(s, watch_id)
         if not watch:
@@ -168,12 +213,11 @@ async def process_watch(watch_id: int, *, send: bool = True) -> list[Match]:
         fs = _filterset(watch)
         template = TemplateSpec.model_validate(watch.template or {})
         channel_urls = repo.resolve_channel_urls(s, watch.channels)
-        repo_name, branch = watch.repo, watch.branch
 
     gh = github.GitHubClient()
     created: list[Match] = []
     async with httpx.AsyncClient(timeout=30) as client:
-        resp = await gh.list_commits(repo_name, branch=branch, etag=etag, client=client)
+        resp = await _listing(gh, watch, etag, client)
         metrics.polls_total.labels(watch.name, str(resp.status)).inc()
         if resp.rate_remaining is not None:
             metrics.rate_remaining.labels(watch.name).set(resp.rate_remaining)
@@ -188,33 +232,32 @@ async def process_watch(watch_id: int, *, send: bool = True) -> list[Match]:
                         rate=resp.rate_remaining, error=resp.error)
             return []
 
-        new = [c for c in reversed(resp.commits) if c.get("sha") not in seen]  # oldest first
+        new = _new_items(watch.kind, resp.items, seen)
         for _ in new:
             metrics.commits_seen_total.labels(watch.name).inc()
 
         # First run: prime the seen-set without notifying (no cold-start spam).
         if not primed:
-            for c in new:
-                seen.add(c["sha"])
+            for ident, _ in new:
+                seen.add(ident)
             _save_state(watch_id, etag=resp.etag, status=200, rate=resp.rate_remaining,
                         error=None, seen=list(seen), primed=True)
             return []
 
-        for c in new:
-            sha = c["sha"]
-            seen.add(sha)
-            data = await _commit_data(client, gh, repo_name, c, fs)
+        for ident, raw in new:
+            seen.add(ident)
+            data, ctx_factory, match_kind = await _prepare(watch, raw, fs, gh, client)
             result = evaluate(data, fs)
             if not result.matched:
                 continue
             metrics.matches_total.labels(watch.name).inc()
-            html_url = c.get("html_url")
-            ctx = render.build_context(repo_name, branch, data, result.keywords, html_url)
+            ctx = ctx_factory(result.keywords)
             title, body = render.render(template, ctx)
             match = Match(
-                watch_id=watch_id, sha=sha, repo=repo_name, branch=branch,
-                author=data.author_name, message=data.message,
-                url=ctx["commit"]["url"], matched_keywords=result.keywords,
+                watch_id=watch_id, kind=match_kind, sha=ident, repo=watch.repo,
+                branch=watch.branch if watch.kind == "commits" else None,
+                author=ctx["item"]["author"], message=ctx["item"]["title"],
+                url=ctx["item"]["url"], matched_keywords=result.keywords,
                 changed_files=data.changed_files,
             )
             if send and channel_urls:
@@ -233,36 +276,31 @@ async def process_watch(watch_id: int, *, send: bool = True) -> list[Match]:
 
 
 async def dry_run(watch_id: int, limit: int = 30) -> list[DryRunResult]:
-    """Evaluate the latest commits without touching state or sending anything."""
+    """Evaluate the latest commits/issues without touching state or sending."""
     with get_session() as s:
         watch = repo.get_watch(s, watch_id)
         if not watch:
             raise KeyError(watch_id)
         fs = _filterset(watch)
         template = TemplateSpec.model_validate(watch.template or {})
-        repo_name, branch = watch.repo, watch.branch
 
     gh = github.GitHubClient()
     out: list[DryRunResult] = []
     async with httpx.AsyncClient(timeout=30) as client:
-        resp = await gh.list_commits(
-            repo_name, branch=branch, per_page=limit, client=client
-        )
+        resp = await _listing(gh, watch, None, client, per_page=limit)
         if resp.status != 200:
             raise RuntimeError(f"GitHub error {resp.status}: {resp.error}")
-        for c in resp.commits:
-            data = await _commit_data(client, gh, repo_name, c, fs)
+        items = _new_items(watch.kind, resp.items, set())  # evaluate all, skip PRs
+        for ident, raw in items:
+            data, ctx_factory, _ = await _prepare(watch, raw, fs, gh, client)
             result = evaluate(data, fs)
             title = body = None
             if result.matched:
-                ctx = render.build_context(
-                    repo_name, branch, data, result.keywords, c.get("html_url")
-                )
-                title, body = render.render(template, ctx)
+                title, body = render.render(template, ctx_factory(result.keywords))
             out.append(
                 DryRunResult(
-                    sha=data.sha, author=data.author_name, message=data.message,
-                    url=c.get("html_url"), matched=result.matched,
+                    sha=ident, author=data.author_name, message=data.message,
+                    url=raw.get("html_url"), matched=result.matched,
                     matched_keywords=result.keywords, changed_files=data.changed_files,
                     rendered_title=title, rendered_body=body,
                 )

@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class IncludeExclude(BaseModel):
@@ -32,13 +32,16 @@ class FilterSet(BaseModel):
 
 
 class TemplateSpec(BaseModel):
-    title: str = "{{ repo }}: {{ commit.message_first_line }}"
-    body: str = "{{ commit.author }} · {{ commit.short_sha }}"
+    # `item` is kind-neutral (works for both commits and issues). Commit watches
+    # may also use `commit.*`, issue watches `issue.*`.
+    title: str = "{{ repo }}: {{ item.title }}"
+    body: str = "{{ item.author }} · {{ item.ref }}"
 
 
 class WatchCreate(BaseModel):
     name: str
     repo: str
+    kind: Literal["commits", "issues"] = "commits"
     branch: str | None = None
     interval: int | None = Field(default=None, ge=5)
     enabled: bool = True
@@ -53,9 +56,20 @@ class WatchCreate(BaseModel):
             raise ValueError("repo must be 'owner/name'")
         return v
 
+    @model_validator(mode="after")
+    def _filters_match_kind(self) -> WatchCreate:
+        # files/diff inspect commit contents; they never apply to issues.
+        if self.kind == "issues" and (self.filters.files or self.filters.diff):
+            raise ValueError(
+                "issue watches support only 'message' (title+body) and 'author' "
+                "filters; 'files' and 'diff' are commit-only"
+            )
+        return self
+
 
 class WatchUpdate(BaseModel):
     repo: str | None = None
+    kind: Literal["commits", "issues"] | None = None
     branch: str | None = None
     interval: int | None = Field(default=None, ge=5)
     enabled: bool | None = None
@@ -68,6 +82,7 @@ class WatchRead(BaseModel):
     id: int
     name: str
     repo: str
+    kind: str
     branch: str | None
     interval: int | None
     enabled: bool
@@ -90,6 +105,7 @@ class ChannelRead(BaseModel):
 class MatchRead(BaseModel):
     id: int
     watch_id: int
+    kind: str
     sha: str
     repo: str
     branch: str | None

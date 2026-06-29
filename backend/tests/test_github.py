@@ -16,7 +16,7 @@ async def test_list_commits_304_is_zero_cost():
     gh = GitHubClient(token=None)
     resp = await gh.list_commits("o/r", etag='"abc"')
     assert resp.status == 304
-    assert resp.commits == []
+    assert resp.items == []
     assert resp.etag == '"abc"'
     assert resp.rate_remaining == 4999
 
@@ -34,7 +34,7 @@ async def test_list_commits_200_parses_and_returns_etag():
     resp = await gh.list_commits("o/r")
     assert resp.status == 200
     assert resp.etag == '"def"'
-    assert resp.commits[0]["sha"] == "1"
+    assert resp.items[0]["sha"] == "1"
 
 
 def test_commit_data_from_detail_extracts_files_and_diff():

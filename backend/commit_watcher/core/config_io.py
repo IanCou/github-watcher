@@ -21,6 +21,8 @@ def export_yaml() -> str:
                 "repo": w.repo,
                 "channels": w.channels,
             }
+            if w.kind != "commits":
+                entry["kind"] = w.kind
             if w.branch:
                 entry["branch"] = w.branch
             if w.interval:
@@ -63,7 +65,7 @@ def import_yaml(text: str, *, replace: bool = False) -> tuple[int, int]:
             wc = WatchCreate.model_validate(entry)
             existing = repo.get_watch_by_name(s, wc.name)
             payload = dict(
-                repo=wc.repo, branch=wc.branch, interval=wc.interval,
+                repo=wc.repo, kind=wc.kind, branch=wc.branch, interval=wc.interval,
                 enabled=wc.enabled,
                 filters=wc.filters.model_dump(exclude_none=True),
                 template=wc.template.model_dump(), channels=wc.channels,

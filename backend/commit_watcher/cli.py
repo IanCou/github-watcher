@@ -32,7 +32,8 @@ def _init() -> None:
 def watch_list() -> None:
     for w in services.list_watches():
         flag = "" if w.enabled else " (disabled)"
-        typer.echo(f"[{w.id}] {w.name} -> {w.repo}@{w.branch or 'default'}{flag}")
+        target = w.repo if w.kind == "issues" else f"{w.repo}@{w.branch or 'default'}"
+        typer.echo(f"[{w.id}] {w.name} -> {w.kind}:{target}{flag}")
 
 
 @watch_app.command("add")

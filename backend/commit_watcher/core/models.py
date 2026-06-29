@@ -34,7 +34,8 @@ class Watch(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(index=True, unique=True)
     repo: str  # "owner/name"
-    branch: str | None = None  # None -> repo default branch
+    kind: str = "commits"  # "commits" | "issues"
+    branch: str | None = None  # commits only; None -> repo default branch
     interval: int | None = None  # seconds; None -> settings.default_interval
     enabled: bool = True
 
@@ -61,11 +62,12 @@ class PollState(SQLModel, table=True):
 
 
 class Match(SQLModel, table=True):
-    """A commit that passed a watch's filters (history record)."""
+    """A commit or issue that passed a watch's filters (history record)."""
 
     id: int | None = Field(default=None, primary_key=True)
     watch_id: int = Field(index=True, foreign_key="watch.id")
-    sha: str = Field(index=True)
+    kind: str = "commit"  # "commit" | "issue"
+    sha: str = Field(index=True)  # commit SHA, or issue number as a string
     repo: str
     branch: str | None = None
     author: str | None = None

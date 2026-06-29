@@ -36,17 +36,21 @@ def add_watch(
     name: str,
     repo: str,
     channels: list[str],
+    kind: str = "commits",
     branch: str | None = None,
     interval: int | None = None,
     filters: dict[str, Any] | None = None,
     template: dict[str, Any] | None = None,
 ) -> dict:
-    """Create a watch. `repo` is 'owner/name'. `filters` may set message/author/
-    files/diff, each with include/exclude lists (files=globs, message/diff=regex).
+    """Create a watch. `repo` is 'owner/name'. `kind` is 'commits' (default) or
+    'issues'. `filters` may set message/author/files/diff, each with
+    include/exclude lists (files=globs, message/diff=regex). For issues, only
+    message (matches title+body) and author apply; files/diff are commit-only.
     """
     w = services.create_watch(
         WatchCreate(
-            name=name, repo=repo, branch=branch, interval=interval, channels=channels,
+            name=name, repo=repo, kind=kind, branch=branch, interval=interval,
+            channels=channels,
             filters=FilterSet.model_validate(filters or {}),
             template=TemplateSpec.model_validate(template or {}),
         )
