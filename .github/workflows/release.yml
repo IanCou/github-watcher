@@ -15,7 +15,7 @@ jobs:
       packages: write # push to GHCR
       id-token: write # cosign keyless signing (OIDC)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # GHCR image names must be lowercase; github.repository keeps the owner's case.
       - name: Compute lowercase image name
