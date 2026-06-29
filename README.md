@@ -6,7 +6,7 @@
 [![ghcr](https://img.shields.io/badge/ghcr.io-iancou%2Fgithub--watcher-blue?logo=docker)](https://github.com/IanCou/github-watcher/pkgs/container/github-watcher)
 
 Poll **any** GitHub repo's **commits or issues**, **filter** them by message / author / changed files /
-diff content, and get **notified** via ntfy, Discord, Slack, Telegram, email — anything
+diff content, and get **notified** via ntfy, Discord, Slack, Telegram, email - anything
 [Apprise](https://github.com/caronc/apprise) supports.
 
 Built for repos you **don't own** (where webhooks and GitHub Actions aren't an option): it polls the
@@ -15,14 +15,14 @@ rate limit.
 
 Four ways to drive it, all sharing one backend:
 
-- 🖥️ **Web UI** — manage watches/channels, browse match history, watch live status
-- 🔌 **REST API** — OpenAPI-documented, at `/docs`
-- ⌨️ **CLI** — `github-watcher watch add …`
-- 🤖 **MCP server** — so agents (Claude etc.) can manage and query it directly
+- 🖥️ **Web UI** - manage watches/channels, browse match history, watch live status
+- 🔌 **REST API** - OpenAPI-documented, at `/docs`
+- ⌨️ **CLI** - `github-watcher watch add …`
+- 🤖 **MCP server** - so agents (Claude etc.) can manage and query it directly
 
-> Why it exists: notification tools assume you control the repo. For a third-party repo — say,
+> Why it exists: notification tools assume you control the repo. For a third-party repo - say,
 > watching [SimplifyJobs/Summer2026-Internships](https://github.com/SimplifyJobs/Summer2026-Internships)
-> for a **Google** posting — polling + content filtering is the only path. This generalizes that.
+> for a **Google** posting - polling + content filtering is the only path. This generalizes that.
 
 ---
 
@@ -45,12 +45,12 @@ docker compose exec github-watcher github-watcher config import /app/config.yml
 A watch has up to four filter categories. A commit notifies only if it passes **every** configured
 category (AND). Within a category it must match an `include` (if any) and no `exclude`.
 
-| Category  | Matches against            | Pattern type | Needs diff fetch? |
-|-----------|----------------------------|--------------|-------------------|
-| `message` | commit message             | regex        | no                |
-| `author`  | author name + email        | substring    | no                |
-| `files`   | changed file paths         | glob (`**`)  | yes               |
-| `diff`    | added/removed diff lines   | regex        | yes               |
+| Category  | Matches against          | Pattern type | Needs diff fetch? |
+| --------- | ------------------------ | ------------ | ----------------- |
+| `message` | commit message           | regex        | no                |
+| `author`  | author name + email      | substring    | no                |
+| `files`   | changed file paths       | glob (`**`)  | yes               |
+| `diff`    | added/removed diff lines | regex        | yes               |
 
 Watches using only `message`/`author` cost **one** API call per change. `files`/`diff` filters fetch
 each new commit's diff (opt-in cost). Matched keywords are stored on each match and available to your
@@ -60,7 +60,7 @@ notification template.
 
 A watch has a `kind`: **`commits`** (default) or **`issues`**. Issue watches poll a repo's new issues
 (pull requests excluded); for them, `message` matches the issue **title + body** and `author` matches the
-opener — `files`/`diff` are commit-only. Templates expose a kind-neutral `{{ item.title/author/ref/url }}`
+opener - `files`/`diff` are commit-only. Templates expose a kind-neutral `{{ item.title/author/ref/url }}`
 plus `{{ commit.* }}` / `{{ issue.* }}`.
 
 ```yaml
@@ -75,7 +75,7 @@ watches:
 
 ### The "Google internship" example
 
-> *Notify me only when a Google posting is added to the internship list.*
+> _Notify me only when a Google posting is added to the internship list._
 
 ```yaml
 watches:
@@ -85,11 +85,11 @@ watches:
     interval: 60
     channels: [ntfy-main, discord-jobs]
     filters:
-      files: { include: ["**/listings.json"] }   # ignore README/badge noise
-      diff:  { include: ['(?i)\bgoogle\b'] }      # only when "google" is added/removed
+      files: { include: ["**/listings.json"] } # ignore README/badge noise
+      diff: { include: ['(?i)\bgoogle\b'] } # only when "google" is added/removed
     template:
       title: "New match in {{ repo }}: {{ matched_keywords | join(', ') }}"
-      body:  "{{ commit.message_first_line }} — {{ commit.author }} · {{ commit.short_sha }}"
+      body: "{{ commit.message_first_line }} - {{ commit.author }} · {{ commit.short_sha }}"
 ```
 
 See [`config.example.yml`](config.example.yml) for more.
@@ -131,7 +131,14 @@ python -m github_watcher.mcp_server
 Register it with an MCP client, e.g. Claude Code:
 
 ```json
-{ "mcpServers": { "github-watcher": { "command": "python", "args": ["-m", "github_watcher.mcp_server"] } } }
+{
+  "mcpServers": {
+    "github-watcher": {
+      "command": "python",
+      "args": ["-m", "github_watcher.mcp_server"]
+    }
+  }
+}
 ```
 
 Tools: `list_watches`, `add_watch`, `update_watch`, `delete_watch`, `list_channels`, `add_channel`,
@@ -139,9 +146,9 @@ Tools: `list_watches`, `add_watch`, `update_watch`, `delete_watch`, `list_channe
 
 ## Observability
 
-- `GET /healthz` — liveness (used by the Docker healthcheck)
-- `GET /metrics` — Prometheus: polls, commits seen, matches, notifications, GitHub rate remaining,
-  errors — all labeled by watch.
+- `GET /healthz` - liveness (used by the Docker healthcheck)
+- `GET /metrics` - Prometheus: polls, commits seen, matches, notifications, GitHub rate remaining,
+  errors - all labeled by watch.
 
 ## Development
 
@@ -160,9 +167,16 @@ cd frontend && npm install && npm run dev
 
 A single Python service with a shared **service layer** behind every interface, so the UI, CLI, MCP,
 and background poller never drift. **SQLite** is the source of truth; YAML import/export is for
-portability. See [docs in the source](backend/github_watcher/) — `services.py` is the entry point for
+portability. See [docs in the source](backend/github_watcher/) - `services.py` is the entry point for
 all business logic, `core/filters.py` is the filter engine, `core/github.py` the ETag-aware client.
+
+## Design & decisions
+
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - module map, the core poll→filter→notify pipeline, and how to extend it.
+- [docs/decisions/](docs/decisions/index.md) - Architecture Decision Records: the **why** behind polling, ETag, the shared service layer, SQLite, Apprise, commits+issues, MCP, and the CI/supply-chain setup.
+- [docs/STORY.md](docs/STORY.md) - the narrative of how the project came to be.
+- [CHANGELOG.md](CHANGELOG.md) - release history.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT - see [LICENSE](LICENSE).
