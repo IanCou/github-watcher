@@ -1,4 +1,5 @@
 """FastAPI application: REST API, /metrics, /healthz, background poller, SPA."""
+
 from __future__ import annotations
 
 import logging

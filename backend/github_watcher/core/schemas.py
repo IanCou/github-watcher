@@ -1,4 +1,5 @@
 """Pydantic DTOs for API/CLI/MCP input + the validated filter/template shapes."""
+
 from __future__ import annotations
 
 from datetime import datetime

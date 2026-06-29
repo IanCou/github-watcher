@@ -1,4 +1,5 @@
 """Typer CLI over the shared service layer."""
+
 from __future__ import annotations
 
 import asyncio

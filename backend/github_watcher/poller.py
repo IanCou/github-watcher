@@ -2,6 +2,7 @@
 interval. Started/stopped via the FastAPI lifespan (or `cli serve`). Shares the
 service layer, so a future split into a standalone worker is a no-op.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -40,9 +41,7 @@ class Poller:
                 for wid, w in wanted.items():
                     if wid not in self._tasks:
                         interval = w.interval or settings.default_interval
-                        self._tasks[wid] = asyncio.create_task(
-                            self._run_watch(wid, interval)
-                        )
+                        self._tasks[wid] = asyncio.create_task(self._run_watch(wid, interval))
             except Exception:  # noqa: BLE001
                 log.exception("supervisor loop error")
             await _sleep_or_stop(self._stop, 15)

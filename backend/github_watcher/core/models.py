@@ -4,6 +4,7 @@ Watch filter/template/channel config is stored as JSON columns so the schema
 stays flat while the filter engine evolves. Pydantic DTOs in ``schemas.py``
 validate the shape on the way in and out.
 """
+
 from __future__ import annotations
 
 from datetime import datetime

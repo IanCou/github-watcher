@@ -1,4 +1,5 @@
 """Process-level settings sourced from environment variables."""
+
 from __future__ import annotations
 
 import os

@@ -21,7 +21,8 @@ export function Button({
 }) {
   const styles = {
     primary: "bg-indigo-600 text-white hover:bg-indigo-500",
-    ghost: "border border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800",
+    ghost:
+      "border border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800",
     danger: "text-red-600 hover:bg-red-50 dark:hover:bg-red-950",
   }[variant];
   return (

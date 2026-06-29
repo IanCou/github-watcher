@@ -17,3 +17,8 @@ frontend/dist/
 
 # OS
 .DS_Store
+
+# Coverage
+.coverage
+htmlcov/
+.pytest_cache/

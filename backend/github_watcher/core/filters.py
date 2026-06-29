@@ -11,6 +11,7 @@ any are configured) and must match no ``exclude`` pattern. The set of
 human-meaningful matched tokens (e.g. "google") is returned for templating and
 stored on the Match record.
 """
+
 from __future__ import annotations
 
 import re
@@ -72,6 +73,7 @@ def _eval(value: str, spec: IncludeExclude, *, regex: bool) -> tuple[bool, list[
 
     Returns (passed, matched_include_patterns).
     """
+
     def hit(pattern: str) -> bool:
         if regex:
             return re.search(pattern, value) is not None

@@ -1,4 +1,5 @@
 """Watch CRUD + per-watch actions (run-now, dry-run)."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
@@ -17,9 +18,16 @@ router = APIRouter(prefix="/api/v1/watches", tags=["watches"])
 
 def _read(w) -> WatchRead:
     return WatchRead(
-        id=w.id, name=w.name, repo=w.repo, kind=w.kind, branch=w.branch,
-        interval=w.interval, enabled=w.enabled, filters=w.filters,
-        template=w.template, channels=w.channels,
+        id=w.id,
+        name=w.name,
+        repo=w.repo,
+        kind=w.kind,
+        branch=w.branch,
+        interval=w.interval,
+        enabled=w.enabled,
+        filters=w.filters,
+        template=w.template,
+        channels=w.channels,
     )
 
 

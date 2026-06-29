@@ -1,0 +1,5 @@
+# DL3008: pin apt versions — impractical for tzdata on a moving base image.
+# DL3013: pin pip versions — deps are pinned in pyproject.toml.
+ignored:
+  - DL3008
+  - DL3013

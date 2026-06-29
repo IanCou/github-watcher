@@ -24,7 +24,11 @@ export function Watches() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<number | null>(null);
 
-  const load = () => api.listWatches().then(setWatches).catch((e) => setError(String(e)));
+  const load = () =>
+    api
+      .listWatches()
+      .then(setWatches)
+      .catch((e) => setError(String(e)));
   useEffect(() => {
     load();
   }, []);
@@ -70,7 +74,11 @@ export function Watches() {
         </div>
       </Card>
 
-      {error && <Card><span className="text-sm text-red-600">{error}</span></Card>}
+      {error && (
+        <Card>
+          <span className="text-sm text-red-600">{error}</span>
+        </Card>
+      )}
 
       {watches.map((w) => (
         <Card key={w.id}>
@@ -83,8 +91,8 @@ export function Watches() {
                 </Badge>
               </div>
               <div className="text-sm text-slate-500">
-                {w.repo}@{w.branch ?? "default"} · every {w.interval ?? "default"}s ·{" "}
-                channels: {w.channels.join(", ") || "—"}
+                {w.repo}@{w.branch ?? "default"} · every {w.interval ?? "default"}s · channels:{" "}
+                {w.channels.join(", ") || "—"}
               </div>
               <pre className="mt-2 overflow-x-auto rounded bg-slate-100 p-2 text-xs dark:bg-slate-800">
                 {JSON.stringify(w.filters, null, 2)}

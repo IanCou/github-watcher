@@ -22,8 +22,11 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
+    "pytest-cov>=5.0",
     "respx>=0.21",
     "ruff>=0.4",
+    "pyright>=1.1.350",
+    "pip-audit>=2.7",
 ]
 
 [project.scripts]
@@ -48,3 +51,15 @@ ignore = ["B008"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.pyright]
+include = ["github_watcher"]
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "basic"
+pythonVersion = "3.11"
+# SQLModel types model columns as their Python type, so ORM expressions
+# (Model.col.desc(), int|None PKs passed to int params) trip these without
+# being real bugs. Use col() where it helps; relax the rest to keep signal.
+reportArgumentType = false
+reportAttributeAccessIssue = false

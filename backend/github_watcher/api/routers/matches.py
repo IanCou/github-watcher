@@ -1,4 +1,5 @@
 """Match history + per-watch status."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter

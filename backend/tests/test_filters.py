@@ -62,12 +62,8 @@ def test_categories_are_anded():
         files=IncludeExclude(include=["**/listings.json"]),
         diff=IncludeExclude(include=[r"(?i)google"]),
     )
-    google_in_listings = _commit(
-        changed_files=["listings.json"], diff_text="+ Google SWE Intern"
-    )
-    google_elsewhere = _commit(
-        changed_files=["README.md"], diff_text="+ Google SWE Intern"
-    )
+    google_in_listings = _commit(changed_files=["listings.json"], diff_text="+ Google SWE Intern")
+    google_elsewhere = _commit(changed_files=["README.md"], diff_text="+ Google SWE Intern")
     assert evaluate(google_in_listings, fs).matched
     assert not evaluate(google_elsewhere, fs).matched
 

@@ -4,6 +4,7 @@ Every context exposes a kind-neutral ``item`` (title/author/ref/url) so one
 template works for both. Commit watches additionally get ``commit.*`` and issue
 watches ``issue.*`` for richer templates.
 """
+
 from __future__ import annotations
 
 from jinja2 import Environment, StrictUndefined

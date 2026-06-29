@@ -3,6 +3,7 @@
 Unchanged listings return HTTP 304 via ``If-None-Match`` and cost zero against
 the rate limit — the key efficiency lever that makes tight polling safe.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -57,9 +58,7 @@ class GitHubClient:
             if r.status_code == 304:
                 return ListResponse(304, [], new_etag, remaining)
             if r.status_code != 200:
-                return ListResponse(
-                    r.status_code, [], new_etag, remaining, error=r.text[:300]
-                )
+                return ListResponse(r.status_code, [], new_etag, remaining, error=r.text[:300])
             return ListResponse(200, r.json(), new_etag, remaining)
         except httpx.HTTPError as e:
             return ListResponse(0, [], etag, None, error=str(e))
@@ -79,9 +78,7 @@ class GitHubClient:
         params: dict[str, str | int] = {"per_page": per_page}
         if branch:
             params["sha"] = branch
-        return await self._list(
-            f"/repos/{repo}/commits", params, etag=etag, client=client
-        )
+        return await self._list(f"/repos/{repo}/commits", params, etag=etag, client=client)
 
     async def list_issues(
         self,
@@ -99,9 +96,7 @@ class GitHubClient:
             "sort": "created",
             "direction": "desc",
         }
-        return await self._list(
-            f"/repos/{repo}/issues", params, etag=etag, client=client
-        )
+        return await self._list(f"/repos/{repo}/issues", params, etag=etag, client=client)
 
     async def fetch_commit_detail(
         self, repo: str, sha: str, *, client: httpx.AsyncClient | None = None

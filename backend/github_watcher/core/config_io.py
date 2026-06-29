@@ -1,4 +1,5 @@
 """YAML <-> DB import/export for portability/GitOps. The DB stays authoritative."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -34,9 +35,7 @@ def export_yaml() -> str:
             if w.template:
                 entry["template"] = w.template
             watches.append(entry)
-    return yaml.safe_dump(
-        {"channels": channels, "watches": watches}, sort_keys=False, width=100
-    )
+    return yaml.safe_dump({"channels": channels, "watches": watches}, sort_keys=False, width=100)
 
 
 def import_yaml(text: str, *, replace: bool = False) -> tuple[int, int]:
@@ -65,10 +64,14 @@ def import_yaml(text: str, *, replace: bool = False) -> tuple[int, int]:
             wc = WatchCreate.model_validate(entry)
             existing = repo.get_watch_by_name(s, wc.name)
             payload = dict(
-                repo=wc.repo, kind=wc.kind, branch=wc.branch, interval=wc.interval,
+                repo=wc.repo,
+                kind=wc.kind,
+                branch=wc.branch,
+                interval=wc.interval,
                 enabled=wc.enabled,
                 filters=wc.filters.model_dump(exclude_none=True),
-                template=wc.template.model_dump(), channels=wc.channels,
+                template=wc.template.model_dump(),
+                channels=wc.channels,
             )
             if existing:
                 for k, v in payload.items():

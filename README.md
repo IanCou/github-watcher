@@ -1,7 +1,12 @@
 # github-watcher
 
-Poll **any** GitHub repo's commits, **filter** them by message / author / changed files / diff
-content, and get **notified** via ntfy, Discord, Slack, Telegram, email — anything
+[![ci](https://github.com/IanCou/github-watcher/actions/workflows/ci.yml/badge.svg)](https://github.com/IanCou/github-watcher/actions/workflows/ci.yml)
+[![codeql](https://github.com/IanCou/github-watcher/actions/workflows/codeql.yml/badge.svg)](https://github.com/IanCou/github-watcher/actions/workflows/codeql.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![ghcr](https://img.shields.io/badge/ghcr.io-iancou%2Fgithub--watcher-blue?logo=docker)](https://github.com/IanCou/github-watcher/pkgs/container/github-watcher)
+
+Poll **any** GitHub repo's **commits or issues**, **filter** them by message / author / changed files /
+diff content, and get **notified** via ntfy, Discord, Slack, Telegram, email — anything
 [Apprise](https://github.com/caronc/apprise) supports.
 
 Built for repos you **don't own** (where webhooks and GitHub Actions aren't an option): it polls the
@@ -50,6 +55,23 @@ category (AND). Within a category it must match an `include` (if any) and no `ex
 Watches using only `message`/`author` cost **one** API call per change. `files`/`diff` filters fetch
 each new commit's diff (opt-in cost). Matched keywords are stored on each match and available to your
 notification template.
+
+### Commits or issues
+
+A watch has a `kind`: **`commits`** (default) or **`issues`**. Issue watches poll a repo's new issues
+(pull requests excluded); for them, `message` matches the issue **title + body** and `author` matches the
+opener — `files`/`diff` are commit-only. Templates expose a kind-neutral `{{ item.title/author/ref/url }}`
+plus `{{ commit.* }}` / `{{ issue.* }}`.
+
+```yaml
+watches:
+  - name: new-internship-issues
+    repo: SimplifyJobs/Summer2026-Internships
+    kind: issues
+    channels: [ntfy-main]
+    filters:
+      message: { include: ['(?i)company name\s*\n+\s*(amazon|google|meta)'] }
+```
 
 ### The "Google internship" example
 

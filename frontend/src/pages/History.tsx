@@ -10,7 +10,11 @@ export function History() {
   }, []);
 
   if (matches.length === 0) {
-    return <Card><span className="text-sm text-slate-500">No matches yet.</span></Card>;
+    return (
+      <Card>
+        <span className="text-sm text-slate-500">No matches yet.</span>
+      </Card>
+    );
   }
 
   return (
@@ -30,7 +34,9 @@ export function History() {
                 </a>
                 <span className="text-sm text-slate-500">{m.repo}</span>
                 {m.matched_keywords.map((k) => (
-                  <Badge key={k} tone="indigo">{k}</Badge>
+                  <Badge key={k} tone="indigo">
+                    {k}
+                  </Badge>
                 ))}
               </div>
               <div className="truncate text-sm">{m.message?.split("\n")[0]}</div>

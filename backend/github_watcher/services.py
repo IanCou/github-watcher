@@ -2,6 +2,7 @@
 the background poller. Everything goes through here so the human and agent
 surfaces never drift apart.
 """
+
 from __future__ import annotations
 
 import logging
@@ -193,9 +194,7 @@ async def _prepare(watch: Watch, raw: dict, fs: FilterSet, gh, client):
     data = await _commit_data(client, gh, watch.repo, raw, fs)
 
     def ctx(keywords):
-        return render.build_context(
-            watch.repo, watch.branch, data, keywords, raw.get("html_url")
-        )
+        return render.build_context(watch.repo, watch.branch, data, keywords, raw.get("html_url"))
 
     return data, ctx, "commit"
 
@@ -223,13 +222,17 @@ async def process_watch(watch_id: int, *, send: bool = True) -> list[Match]:
             metrics.rate_remaining.labels(watch.name).set(resp.rate_remaining)
 
         if resp.status == 304:
-            _save_state(watch_id, etag=resp.etag, status=304,
-                        rate=resp.rate_remaining, error=None)
+            _save_state(watch_id, etag=resp.etag, status=304, rate=resp.rate_remaining, error=None)
             return []
         if resp.status != 200:
             metrics.poll_errors_total.labels(watch.name).inc()
-            _save_state(watch_id, etag=resp.etag, status=resp.status,
-                        rate=resp.rate_remaining, error=resp.error)
+            _save_state(
+                watch_id,
+                etag=resp.etag,
+                status=resp.status,
+                rate=resp.rate_remaining,
+                error=resp.error,
+            )
             return []
 
         new = _new_items(watch.kind, resp.items, seen)
@@ -240,8 +243,15 @@ async def process_watch(watch_id: int, *, send: bool = True) -> list[Match]:
         if not primed:
             for ident, _ in new:
                 seen.add(ident)
-            _save_state(watch_id, etag=resp.etag, status=200, rate=resp.rate_remaining,
-                        error=None, seen=list(seen), primed=True)
+            _save_state(
+                watch_id,
+                etag=resp.etag,
+                status=200,
+                rate=resp.rate_remaining,
+                error=None,
+                seen=list(seen),
+                primed=True,
+            )
             return []
 
         for ident, raw in new:
@@ -254,24 +264,34 @@ async def process_watch(watch_id: int, *, send: bool = True) -> list[Match]:
             ctx = ctx_factory(result.keywords)
             title, body = render.render(template, ctx)
             match = Match(
-                watch_id=watch_id, kind=match_kind, sha=ident, repo=watch.repo,
+                watch_id=watch_id,
+                kind=match_kind,
+                sha=ident,
+                repo=watch.repo,
                 branch=watch.branch if watch.kind == "commits" else None,
-                author=ctx["item"]["author"], message=ctx["item"]["title"],
-                url=ctx["item"]["url"], matched_keywords=result.keywords,
+                author=ctx["item"]["author"],
+                message=ctx["item"]["title"],
+                url=ctx["item"]["url"],
+                matched_keywords=result.keywords,
                 changed_files=data.changed_files,
             )
             if send and channel_urls:
                 ok, err = await notify.send(channel_urls, title, body)
                 match.notified = ok
                 match.notify_error = err
-                metrics.notifications_total.labels(
-                    watch.name, "ok" if ok else "error"
-                ).inc()
+                metrics.notifications_total.labels(watch.name, "ok" if ok else "error").inc()
             with get_session() as s:
                 created.append(repo.add_match(s, match))
 
-    _save_state(watch_id, etag=resp.etag, status=200, rate=resp.rate_remaining,
-                error=None, seen=list(seen), primed=True)
+    _save_state(
+        watch_id,
+        etag=resp.etag,
+        status=200,
+        rate=resp.rate_remaining,
+        error=None,
+        seen=list(seen),
+        primed=True,
+    )
     return created
 
 
@@ -299,18 +319,29 @@ async def dry_run(watch_id: int, limit: int = 30) -> list[DryRunResult]:
                 title, body = render.render(template, ctx_factory(result.keywords))
             out.append(
                 DryRunResult(
-                    sha=ident, author=data.author_name, message=data.message,
-                    url=raw.get("html_url"), matched=result.matched,
-                    matched_keywords=result.keywords, changed_files=data.changed_files,
-                    rendered_title=title, rendered_body=body,
+                    sha=ident,
+                    author=data.author_name,
+                    message=data.message,
+                    url=raw.get("html_url"),
+                    matched=result.matched,
+                    matched_keywords=result.keywords,
+                    changed_files=data.changed_files,
+                    rendered_title=title,
+                    rendered_body=body,
                 )
             )
     return out
 
 
 def _save_state(
-    watch_id: int, *, etag, status, rate, error,
-    seen: list[str] | None = None, primed: bool | None = None,
+    watch_id: int,
+    *,
+    etag,
+    status,
+    rate,
+    error,
+    seen: list[str] | None = None,
+    primed: bool | None = None,
 ) -> None:
     with get_session() as s:
         st = repo.get_state(s, watch_id) or PollState(watch_id=watch_id)
@@ -320,7 +351,7 @@ def _save_state(
         st.last_error = error
         st.last_polled_at = now_local()
         if seen is not None:
-            st.seen = seen[-settings.seen_cap:]
+            st.seen = seen[-settings.seen_cap :]
         if primed is not None:
             st.primed = primed
         repo.upsert_state(s, st)

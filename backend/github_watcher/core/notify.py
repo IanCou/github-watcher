@@ -4,6 +4,7 @@ Channel URLs may embed ``${VAR}`` placeholders so secrets stay in the
 environment rather than the database. A small per-URL rate limiter spaces sends
 to respect provider caps (e.g. Discord ~30/min).
 """
+
 from __future__ import annotations
 
 import asyncio

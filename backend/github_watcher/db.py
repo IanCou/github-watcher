@@ -1,4 +1,5 @@
 """SQLite engine + session/init helpers."""
+
 from __future__ import annotations
 
 from collections.abc import Iterator
@@ -27,9 +28,7 @@ _ADDED_COLUMNS = {
 def _migrate() -> None:
     with _engine.begin() as conn:
         for table, columns in _ADDED_COLUMNS.items():
-            existing = {
-                row[1] for row in conn.execute(text(f"PRAGMA table_info({table})"))
-            }
+            existing = {row[1] for row in conn.execute(text(f"PRAGMA table_info({table})"))}
             if not existing:
                 continue  # table doesn't exist yet; create_all will build it fresh
             for name, ddl in columns:

@@ -1,4 +1,5 @@
 """Data-access layer over SQLModel sessions. No business logic lives here."""
+
 from __future__ import annotations
 
 from sqlmodel import Session, select
@@ -95,9 +96,7 @@ def add_match(s: Session, match: Match) -> Match:
     return match
 
 
-def list_matches(
-    s: Session, *, watch_id: int | None = None, limit: int = 100
-) -> list[Match]:
+def list_matches(s: Session, *, watch_id: int | None = None, limit: int = 100) -> list[Match]:
     stmt = select(Match).order_by(Match.created_at.desc()).limit(limit)
     if watch_id is not None:
         stmt = stmt.where(Match.watch_id == watch_id)

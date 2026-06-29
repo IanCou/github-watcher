@@ -5,6 +5,7 @@ matches with the same semantics as the UI/CLI/REST. Run with:
 
     python -m github_watcher.mcp_server      # stdio transport
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -23,8 +24,13 @@ def list_watches() -> list[dict]:
     """List all watches with their repo, branch, filters, and channels."""
     return [
         {
-            "id": w.id, "name": w.name, "repo": w.repo, "branch": w.branch,
-            "interval": w.interval, "enabled": w.enabled, "filters": w.filters,
+            "id": w.id,
+            "name": w.name,
+            "repo": w.repo,
+            "branch": w.branch,
+            "interval": w.interval,
+            "enabled": w.enabled,
+            "filters": w.filters,
             "channels": w.channels,
         }
         for w in services.list_watches()
@@ -49,7 +55,11 @@ def add_watch(
     """
     w = services.create_watch(
         WatchCreate(
-            name=name, repo=repo, kind=kind, branch=branch, interval=interval,
+            name=name,
+            repo=repo,
+            kind=kind,
+            branch=branch,
+            interval=interval,
             channels=channels,
             filters=FilterSet.model_validate(filters or {}),
             template=TemplateSpec.model_validate(template or {}),
@@ -97,10 +107,15 @@ def get_matches(watch_id: int | None = None, limit: int = 50) -> list[dict]:
     """Return recent matches (filtered commits), newest first."""
     return [
         {
-            "watch_id": m.watch_id, "sha": m.sha, "repo": m.repo, "author": m.author,
+            "watch_id": m.watch_id,
+            "sha": m.sha,
+            "repo": m.repo,
+            "author": m.author,
             "message": (m.message or "").splitlines()[0] if m.message else "",
-            "matched_keywords": m.matched_keywords, "url": m.url,
-            "notified": m.notified, "created_at": m.created_at.isoformat(),
+            "matched_keywords": m.matched_keywords,
+            "url": m.url,
+            "notified": m.notified,
+            "created_at": m.created_at.isoformat(),
         }
         for m in services.list_matches(watch_id=watch_id, limit=limit)
     ]

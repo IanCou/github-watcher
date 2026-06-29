@@ -9,9 +9,7 @@ BASE = "https://api.github.com"
 @respx.mock
 async def test_list_commits_304_is_zero_cost():
     respx.get(f"{BASE}/repos/o/r/commits").mock(
-        return_value=httpx.Response(
-            304, headers={"ETag": '"abc"', "X-RateLimit-Remaining": "4999"}
-        )
+        return_value=httpx.Response(304, headers={"ETag": '"abc"', "X-RateLimit-Remaining": "4999"})
     )
     gh = GitHubClient(token=None)
     resp = await gh.list_commits("o/r", etag='"abc"')

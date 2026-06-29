@@ -35,9 +35,8 @@ export function Channels() {
       <Card>
         <h2 className="mb-2 text-lg font-semibold">Add channel</h2>
         <p className="mb-2 text-sm text-slate-500">
-          Apprise URL — e.g. <code>ntfy://token@host/topic</code> or{" "}
-          <code>discord://id/token</code>. <code>${"{ENV}"}</code> placeholders are resolved at
-          send time.
+          Apprise URL — e.g. <code>ntfy://token@host/topic</code> or <code>discord://id/token</code>
+          . <code>${"{ENV}"}</code> placeholders are resolved at send time.
         </p>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_2fr_auto]">
           <Input placeholder="name" value={name} onChange={(e) => setName(e.target.value)} />
@@ -46,7 +45,11 @@ export function Channels() {
         </div>
       </Card>
 
-      {msg && <Card><span className="text-sm">{msg}</span></Card>}
+      {msg && (
+        <Card>
+          <span className="text-sm">{msg}</span>
+        </Card>
+      )}
 
       {channels.map((c) => (
         <Card key={c.id}>
@@ -56,11 +59,10 @@ export function Channels() {
               <div className="font-mono text-xs text-slate-500">{c.url}</div>
             </div>
             <div className="flex gap-1">
-              <Button variant="ghost" onClick={() => test(c.name)}>Test</Button>
-              <Button
-                variant="danger"
-                onClick={() => api.deleteChannel(c.name).then(load)}
-              >
+              <Button variant="ghost" onClick={() => test(c.name)}>
+                Test
+              </Button>
+              <Button variant="danger" onClick={() => api.deleteChannel(c.name).then(load)}>
                 Delete
               </Button>
             </div>

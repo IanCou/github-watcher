@@ -62,18 +62,14 @@ export const api = {
     req<Watch>("/api/v1/watches", { method: "POST", body: JSON.stringify(body) }),
   updateWatch: (id: number, body: unknown) =>
     req<Watch>(`/api/v1/watches/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
-  deleteWatch: (id: number) =>
-    req<void>(`/api/v1/watches/${id}`, { method: "DELETE" }),
-  runWatch: (id: number) =>
-    req<Match[]>(`/api/v1/watches/${id}/run`, { method: "POST" }),
-  dryRun: (id: number) =>
-    req<unknown[]>(`/api/v1/watches/${id}/dry-run`, { method: "POST" }),
+  deleteWatch: (id: number) => req<void>(`/api/v1/watches/${id}`, { method: "DELETE" }),
+  runWatch: (id: number) => req<Match[]>(`/api/v1/watches/${id}/run`, { method: "POST" }),
+  dryRun: (id: number) => req<unknown[]>(`/api/v1/watches/${id}/dry-run`, { method: "POST" }),
 
   listChannels: () => req<Channel[]>("/api/v1/channels"),
   createChannel: (body: { name: string; url: string }) =>
     req<Channel>("/api/v1/channels", { method: "POST", body: JSON.stringify(body) }),
-  deleteChannel: (name: string) =>
-    req<void>(`/api/v1/channels/${name}`, { method: "DELETE" }),
+  deleteChannel: (name: string) => req<void>(`/api/v1/channels/${name}`, { method: "DELETE" }),
   testChannel: (name: string) =>
     req<{ ok: boolean; error: string | null }>(`/api/v1/channels/${name}/test`, {
       method: "POST",

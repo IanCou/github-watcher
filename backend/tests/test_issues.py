@@ -44,9 +44,7 @@ def test_issue_message_filter_matches_title_or_body():
 def test_issue_author_filter():
     fs = FilterSet(author=IncludeExclude(include=["octocat"]))
     assert evaluate(commit_data_from_issue(_issue()), fs).matched
-    assert not evaluate(
-        commit_data_from_issue(_issue(user={"login": "someone"})), fs
-    ).matched
+    assert not evaluate(commit_data_from_issue(_issue(user={"login": "someone"})), fs).matched
 
 
 def test_issue_context_exposes_item_and_issue():
@@ -68,11 +66,15 @@ def test_default_template_renders_for_issues():
 def test_issue_watch_rejects_commit_only_filters():
     with pytest.raises(ValidationError):
         WatchCreate(
-            name="x", repo="o/r", kind="issues",
+            name="x",
+            repo="o/r",
+            kind="issues",
             filters=FilterSet(diff=IncludeExclude(include=["x"])),
         )
     # message/author are allowed for issues
     WatchCreate(
-        name="x", repo="o/r", kind="issues",
+        name="x",
+        repo="o/r",
+        kind="issues",
         filters=FilterSet(message=IncludeExclude(include=["x"])),
     )
