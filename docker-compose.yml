@@ -15,6 +15,9 @@ services:
       - DISCORD_WEBHOOK_TOKEN=${DISCORD_WEBHOOK_TOKEN:-}
       - DATABASE_URL=sqlite:////data/commit-watcher.db
       - LOG_LEVEL=INFO
+      # Timestamps use this zone. Defaults to UTC; set TZ in .env to your local
+      # zone (e.g. America/New_York) to match the host.
+      - TZ=${TZ:-UTC}
     volumes:
       - cw-data:/data
 

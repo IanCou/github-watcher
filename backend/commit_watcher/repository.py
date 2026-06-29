@@ -1,10 +1,9 @@
 """Data-access layer over SQLModel sessions. No business logic lives here."""
 from __future__ import annotations
 
-from datetime import UTC, datetime
-
 from sqlmodel import Session, select
 
+from .clock import now_local
 from .core.models import Channel, Match, PollState, Watch
 
 
@@ -29,7 +28,7 @@ def add_watch(s: Session, watch: Watch) -> Watch:
 
 
 def save_watch(s: Session, watch: Watch) -> Watch:
-    watch.updated_at = datetime.now(UTC)
+    watch.updated_at = now_local()
     s.add(watch)
     s.commit()
     s.refresh(watch)

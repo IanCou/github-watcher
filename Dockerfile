@@ -15,6 +15,10 @@ ENV PYTHONUNBUFFERED=1 \
     DATABASE_URL=sqlite:////data/commit-watcher.db \
     FRONTEND_DIR=/app/frontend
 
+# tzdata so a TZ env var (e.g. America/New_York) resolves to real local time.
+RUN apt-get update && apt-get install -y --no-install-recommends tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY backend/pyproject.toml backend/
 COPY backend/commit_watcher backend/commit_watcher
 RUN pip install ./backend

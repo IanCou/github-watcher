@@ -6,15 +6,17 @@ validate the shape on the way in and out.
 """
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import JSON, Column
 from sqlmodel import Field, SQLModel
 
+from ..clock import now_local
 
-def _utcnow() -> datetime:
-    return datetime.now(UTC)
+
+def _now() -> datetime:
+    return now_local()
 
 
 class Channel(SQLModel, table=True):
@@ -23,7 +25,7 @@ class Channel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(index=True, unique=True)
     url: str  # Apprise URL; may contain ${ENV} placeholders resolved at send time.
-    created_at: datetime = Field(default_factory=_utcnow)
+    created_at: datetime = Field(default_factory=_now)
 
 
 class Watch(SQLModel, table=True):
@@ -41,8 +43,8 @@ class Watch(SQLModel, table=True):
     template: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
     channels: list[str] = Field(default_factory=list, sa_column=Column(JSON))
 
-    created_at: datetime = Field(default_factory=_utcnow)
-    updated_at: datetime = Field(default_factory=_utcnow)
+    created_at: datetime = Field(default_factory=_now)
+    updated_at: datetime = Field(default_factory=_now)
 
 
 class PollState(SQLModel, table=True):
@@ -73,4 +75,4 @@ class Match(SQLModel, table=True):
     changed_files: list[str] = Field(default_factory=list, sa_column=Column(JSON))
     notified: bool = False
     notify_error: str | None = None
-    created_at: datetime = Field(default_factory=_utcnow)
+    created_at: datetime = Field(default_factory=_now)

@@ -5,12 +5,12 @@ surfaces never drift apart.
 from __future__ import annotations
 
 import logging
-from datetime import UTC
 
 import httpx
 
 from . import metrics
 from . import repository as repo
+from .clock import now_local
 from .core import github, notify, render
 from .core.filters import evaluate
 from .core.models import Channel, Match, PollState, Watch
@@ -274,15 +274,13 @@ def _save_state(
     watch_id: int, *, etag, status, rate, error,
     seen: list[str] | None = None, primed: bool | None = None,
 ) -> None:
-    from datetime import datetime
-
     with get_session() as s:
         st = repo.get_state(s, watch_id) or PollState(watch_id=watch_id)
         st.etag = etag
         st.last_status = status
         st.rate_remaining = rate
         st.last_error = error
-        st.last_polled_at = datetime.now(UTC)
+        st.last_polled_at = now_local()
         if seen is not None:
             st.seen = seen[-settings.seen_cap:]
         if primed is not None:
