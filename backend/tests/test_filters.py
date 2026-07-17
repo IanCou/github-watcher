@@ -57,6 +57,49 @@ def test_diff_ignores_hunk_headers():
     assert not evaluate(_commit(diff_text=diff), fs).matched
 
 
+def test_diff_match_extracts_url_from_same_block():
+    diff = (
+        "@@ -1,3 +1,10 @@\n"
+        " [\n"
+        "+    {\n"
+        '+        "company_name": "Google",\n'
+        '+        "url": "https://careers.google.com/jobs/123",\n'
+        "+    },\n"
+        "     {\n"
+        '         "company_name": "Other Co",\n'
+    )
+    fs = FilterSet(diff=IncludeExclude(include=[r"(?i)\bgoogle\b"]))
+    res = evaluate(_commit(diff_text=diff), fs)
+    assert res.matched
+    assert res.urls == ["https://careers.google.com/jobs/123"]
+
+
+def test_diff_match_ignores_url_in_unrelated_block():
+    diff = (
+        "@@ -1,3 +1,10 @@\n"
+        "+    {\n"
+        '+        "company_name": "Other Co",\n'
+        '+        "url": "https://example.com/other-job",\n'
+        "+    },\n"
+        "     {\n"
+        "+    {\n"
+        '+        "company_name": "Google",\n'
+        '+        "url": "https://careers.google.com/jobs/123",\n'
+        "+    },\n"
+    )
+    fs = FilterSet(diff=IncludeExclude(include=[r"(?i)\bgoogle\b"]))
+    res = evaluate(_commit(diff_text=diff), fs)
+    assert res.matched
+    assert res.urls == ["https://careers.google.com/jobs/123"]
+
+
+def test_diff_match_no_url_present():
+    diff = "+    added google here, no link"
+    fs = FilterSet(diff=IncludeExclude(include=[r"(?i)\bgoogle\b"]))
+    res = evaluate(_commit(diff_text=diff), fs)
+    assert res.matched and res.urls == []
+
+
 def test_categories_are_anded():
     fs = FilterSet(
         files=IncludeExclude(include=["**/listings.json"]),

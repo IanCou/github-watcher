@@ -37,6 +37,46 @@ class CommitData:
 class FilterResult:
     matched: bool
     keywords: list[str] = field(default_factory=list)
+    # URLs found in the same added/removed diff block as a matched keyword
+    # (e.g. the "url" field of a new JSON listing, or a markdown table link).
+    urls: list[str] = field(default_factory=list)
+
+
+_URL_RE = re.compile(r"https?://[^\s\"'()<>]+")
+
+
+def _diff_blocks(diff_text: str) -> list[list[str]]:
+    """Group contiguous added/removed diff lines into blocks.
+
+    A block breaks on any context/header line (unchanged line, ``@@`` hunk
+    header, ``+++``/``---`` file markers) — in practice this isolates one
+    added JSON object / table row per block, since GitHub's unified diff has
+    no unchanged lines *within* a newly-added entry.
+    """
+    blocks: list[list[str]] = []
+    current: list[str] = []
+    for ln in diff_text.splitlines():
+        if ln[:1] in ("+", "-") and not ln.startswith(("+++", "---")):
+            current.append(ln[1:])
+        elif current:
+            blocks.append(current)
+            current = []
+    if current:
+        blocks.append(current)
+    return blocks
+
+
+def _matched_urls(diff_text: str, patterns: list[str]) -> list[str]:
+    """URLs found in whichever diff block contains a line matching ``patterns``."""
+    urls: list[str] = []
+    for block in _diff_blocks(diff_text):
+        if not any(re.search(pat, ln) for pat in patterns for ln in block):
+            continue
+        for ln in block:
+            for m in _URL_RE.findall(ln):
+                if m not in urls:
+                    urls.append(m)
+    return urls
 
 
 def _glob_to_regex(glob: str) -> re.Pattern[str]:
@@ -136,6 +176,7 @@ def evaluate(commit: CommitData, filters: FilterSet) -> FilterResult:
             return FilterResult(False)
         keywords += kw
 
+    urls: list[str] = []
     if filters.diff:
         diff_lines = [
             ln[1:]
@@ -146,9 +187,10 @@ def evaluate(commit: CommitData, filters: FilterSet) -> FilterResult:
         if not ok:
             return FilterResult(False)
         keywords += kw
+        urls = _matched_urls(commit.diff_text, kw)
 
     # Dedupe, preserve order.
     seen: dict[str, None] = {}
     for k in keywords:
         seen.setdefault(k, None)
-    return FilterResult(True, list(seen))
+    return FilterResult(True, list(seen), urls)

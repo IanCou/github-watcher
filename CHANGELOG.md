@@ -6,10 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-17
+
 ### Added
 
 - Documentation: in-repo Architecture Decision Records (`docs/decisions/`), `docs/ARCHITECTURE.md`, and
   this changelog.
+- **`matched_urls` template variable**: a `diff` match now extracts any URL found in the same added/removed
+  diff block as the matched keyword (e.g. a new JSON listing's `"url"` field, or a markdown table row's
+  link), so templates can surface the actual destination link instead of only the GitHub commit URL.
 
 ## [0.1.0] - 2026-06-29
 
@@ -36,5 +41,6 @@ Initial release.
   coverage gate, CodeQL, gitleaks, Trivy, hadolint, pip-audit/npm audit, and Dependabot; tagged releases
   publish a cosign-signed image with an SBOM to GHCR.
 
-[unreleased]: https://github.com/IanCou/github-watcher/compare/v0.1.0...HEAD
+[unreleased]: https://github.com/IanCou/github-watcher/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/IanCou/github-watcher/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/IanCou/github-watcher/releases/tag/v0.1.0

@@ -21,6 +21,7 @@ def build_context(
     commit: CommitData,
     matched_keywords: list[str],
     html_url: str | None,
+    matched_urls: list[str] | None = None,
 ) -> dict:
     message = commit.message or ""
     first_line = message.splitlines()[0] if message else ""
@@ -29,6 +30,7 @@ def build_context(
         "repo": repo,
         "branch": branch,
         "matched_keywords": matched_keywords,
+        "matched_urls": matched_urls or [],
         "changed_files": commit.changed_files,
         "item": {
             "title": first_line,
@@ -62,6 +64,7 @@ def build_issue_context(
         "repo": repo,
         "branch": None,
         "matched_keywords": matched_keywords,
+        "matched_urls": [],
         "changed_files": [],
         "item": {
             "title": title,

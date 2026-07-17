@@ -186,15 +186,17 @@ async def _prepare(watch: Watch, raw: dict, fs: FilterSet, gh, client):
     if watch.kind == "issues":
         data = github.commit_data_from_issue(raw)
 
-        def ctx(keywords):
+        def ctx(keywords, urls):
             return render.build_issue_context(watch.repo, raw, keywords)
 
         return data, ctx, "issue"
 
     data = await _commit_data(client, gh, watch.repo, raw, fs)
 
-    def ctx(keywords):
-        return render.build_context(watch.repo, watch.branch, data, keywords, raw.get("html_url"))
+    def ctx(keywords, urls):
+        return render.build_context(
+            watch.repo, watch.branch, data, keywords, raw.get("html_url"), urls
+        )
 
     return data, ctx, "commit"
 
@@ -261,7 +263,7 @@ async def process_watch(watch_id: int, *, send: bool = True) -> list[Match]:
             if not result.matched:
                 continue
             metrics.matches_total.labels(watch.name).inc()
-            ctx = ctx_factory(result.keywords)
+            ctx = ctx_factory(result.keywords, result.urls)
             title, body = render.render(template, ctx)
             match = Match(
                 watch_id=watch_id,
@@ -316,7 +318,7 @@ async def dry_run(watch_id: int, limit: int = 30) -> list[DryRunResult]:
             result = evaluate(data, fs)
             title = body = None
             if result.matched:
-                title, body = render.render(template, ctx_factory(result.keywords))
+                title, body = render.render(template, ctx_factory(result.keywords, result.urls))
             out.append(
                 DryRunResult(
                     sha=ident,
