@@ -1,6 +1,6 @@
 [project]
 name = "github-watcher"
-version = "0.2.0"
+version = "0.2.1"
 description = "Poll any GitHub repo's commits, filter by message/author/files/diff, and notify via ntfy, Discord, and 100+ Apprise channels. Web UI + REST API + CLI + MCP server."
 requires-python = ">=3.11"
 license = { text = "MIT" }

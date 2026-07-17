@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-07-17
+
+### Changed
+
+- Routine dependency updates: backend (fastapi, uvicorn, sqlmodel, httpx, apprise, jinja2, pyyaml,
+  typer, prometheus-client, mcp) and frontend (vite, @vitejs/plugin-react) bumped to latest; CI
+  Actions (checkout, setup-node, build-push-action, hadolint-action, action-gh-release) updated.
+
 ## [0.2.0] - 2026-07-17
 
 ### Added
@@ -41,6 +49,7 @@ Initial release.
   coverage gate, CodeQL, gitleaks, Trivy, hadolint, pip-audit/npm audit, and Dependabot; tagged releases
   publish a cosign-signed image with an SBOM to GHCR.
 
-[unreleased]: https://github.com/IanCou/github-watcher/compare/v0.2.0...HEAD
+[unreleased]: https://github.com/IanCou/github-watcher/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/IanCou/github-watcher/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/IanCou/github-watcher/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/IanCou/github-watcher/releases/tag/v0.1.0
