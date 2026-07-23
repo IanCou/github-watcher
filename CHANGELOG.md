@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-07-23
+
+### Fixed
+
+- **`diff` filter no longer matches on removed lines**: a commit that only *deletes* a matching row (e.g.
+  a job posting being closed/removed) no longer triggers a notification. Previously `diff` matched against
+  both added and removed lines indiscriminately.
+
 ## [0.2.1] - 2026-07-17
 
 ### Changed
