@@ -50,7 +50,7 @@ category (AND). Within a category it must match an `include` (if any) and no `ex
 | `message` | commit message           | regex        | no                |
 | `author`  | author name + email      | substring    | no                |
 | `files`   | changed file paths       | glob (`**`)  | yes               |
-| `diff`    | added/removed diff lines | regex        | yes               |
+| `diff`    | added diff lines only    | regex        | yes               |
 
 Watches using only `message`/`author` cost **one** API call per change. `files`/`diff` filters fetch
 each new commit's diff (opt-in cost). Matched keywords are stored on each match and available to your
@@ -86,7 +86,7 @@ watches:
     channels: [ntfy-main, discord-jobs]
     filters:
       files: { include: ["**/listings.json"] } # ignore README/badge noise
-      diff: { include: ['(?i)\bgoogle\b'] } # only when "google" is added/removed
+      diff: { include: ['(?i)\bgoogle\b'] } # only when "google" is added (removals don't notify)
     template:
       title: "New match in {{ repo }}: {{ matched_keywords | join(', ') }}"
       body: "{{ commit.message_first_line }} - {{ commit.author }} · {{ commit.short_sha }}"

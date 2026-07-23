@@ -25,7 +25,7 @@ class FilterSet(BaseModel):
     message: IncludeExclude | None = None  # regex on commit message
     author: IncludeExclude | None = None  # substring on author name/email
     files: IncludeExclude | None = None  # glob on changed file paths
-    diff: IncludeExclude | None = None  # regex on added/removed diff lines
+    diff: IncludeExclude | None = None  # regex on added diff lines only
 
     def needs_diff(self) -> bool:
         """Whether evaluating this filter set requires fetching per-commit diffs."""

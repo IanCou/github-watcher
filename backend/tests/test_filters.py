@@ -50,6 +50,28 @@ def test_diff_regex_on_added_lines():
     assert res.matched and res.keywords == [r"(?i)\bgoogle\b"]
 
 
+def test_diff_ignores_removed_lines():
+    # A commit that only *removes* a matching row (e.g. a closed posting)
+    # must not notify.
+    diff = "@@ -1 +0,0 @@\n-  google role removed"
+    fs = FilterSet(diff=IncludeExclude(include=[r"(?i)\bgoogle\b"]))
+    assert not evaluate(_commit(diff_text=diff), fs).matched
+
+
+def test_diff_match_no_url_from_removed_block():
+    # The block has a removed row with a matching keyword+URL, but nothing
+    # added, so it must not match and must not surface the old URL.
+    diff = (
+        "@@ -1,3 +1,2 @@\n"
+        '-        "company_name": "Google",\n'
+        '-        "url": "https://careers.google.com/jobs/123",\n'
+    )
+    fs = FilterSet(diff=IncludeExclude(include=[r"(?i)\bgoogle\b"]))
+    res = evaluate(_commit(diff_text=diff), fs)
+    assert not res.matched
+    assert res.urls == []
+
+
 def test_diff_ignores_hunk_headers():
     diff = "+++ b/listings.json\n--- a/listings.json\n+   nothing relevant"
     fs = FilterSet(diff=IncludeExclude(include=[r"listings"]))

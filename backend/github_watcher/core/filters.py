@@ -4,7 +4,9 @@ Categories (all optional, combined with AND):
   - message: regex against the commit message
   - author:  case-insensitive substring against author name/email
   - files:   glob against changed file paths
-  - diff:    regex against added/removed diff lines
+  - diff:    regex against added diff lines (removed lines are ignored, so a
+             commit that only deletes a matching row - e.g. a closed job
+             posting - does not notify)
 
 Within a category: a candidate must match at least one ``include`` pattern (when
 any are configured) and must match no ``exclude`` pattern. The set of
@@ -29,7 +31,8 @@ class CommitData:
     author_name: str = ""
     author_email: str = ""
     changed_files: list[str] = field(default_factory=list)
-    # Added/removed lines from the unified diff (patch bodies concatenated).
+    # Raw unified diff (patch bodies concatenated); both added and removed
+    # lines are kept here, but the `diff` filter only ever matches additions.
     diff_text: str = ""
 
 
@@ -37,8 +40,8 @@ class CommitData:
 class FilterResult:
     matched: bool
     keywords: list[str] = field(default_factory=list)
-    # URLs found in the same added/removed diff block as a matched keyword
-    # (e.g. the "url" field of a new JSON listing, or a markdown table link).
+    # URLs found in the same added diff block as a matched keyword (e.g. the
+    # "url" field of a new JSON listing, or a markdown table link).
     urls: list[str] = field(default_factory=list)
 
 
@@ -46,7 +49,7 @@ _URL_RE = re.compile(r"https?://[^\s\"'()<>]+")
 
 
 def _diff_blocks(diff_text: str) -> list[list[str]]:
-    """Group contiguous added/removed diff lines into blocks.
+    """Group contiguous added/removed diff lines into blocks, sign kept intact.
 
     A block breaks on any context/header line (unchanged line, ``@@`` hunk
     header, ``+++``/``---`` file markers) — in practice this isolates one
@@ -57,7 +60,7 @@ def _diff_blocks(diff_text: str) -> list[list[str]]:
     current: list[str] = []
     for ln in diff_text.splitlines():
         if ln[:1] in ("+", "-") and not ln.startswith(("+++", "---")):
-            current.append(ln[1:])
+            current.append(ln)
         elif current:
             blocks.append(current)
             current = []
@@ -67,12 +70,19 @@ def _diff_blocks(diff_text: str) -> list[list[str]]:
 
 
 def _matched_urls(diff_text: str, patterns: list[str]) -> list[str]:
-    """URLs found in whichever diff block contains a line matching ``patterns``."""
+    """URLs found in whichever diff block has an *added* line matching ``patterns``.
+
+    Only ``+`` lines are considered, mirroring the main diff-filter match:
+    a block that merely loses a matching row (e.g. a closed posting) yields
+    no URL, and a block's removed lines never leak an old URL for a row that
+    was replaced rather than newly added.
+    """
     urls: list[str] = []
     for block in _diff_blocks(diff_text):
-        if not any(re.search(pat, ln) for pat in patterns for ln in block):
+        added = [ln[1:] for ln in block if ln.startswith("+")]
+        if not any(re.search(pat, ln) for pat in patterns for ln in added):
             continue
-        for ln in block:
+        for ln in added:
             for m in _URL_RE.findall(ln):
                 if m not in urls:
                     urls.append(m)
@@ -178,10 +188,12 @@ def evaluate(commit: CommitData, filters: FilterSet) -> FilterResult:
 
     urls: list[str] = []
     if filters.diff:
+        # Only added lines: a commit that solely *removes* a matching row
+        # (e.g. a closed job posting) must not notify.
         diff_lines = [
             ln[1:]
             for ln in commit.diff_text.splitlines()
-            if ln[:1] in ("+", "-") and not ln.startswith(("+++", "---"))
+            if ln.startswith("+") and not ln.startswith("+++")
         ]
         ok, kw = _eval_any(diff_lines, filters.diff, regex=True)
         if not ok:
